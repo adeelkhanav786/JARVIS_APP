@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#05050f">
+  <title>J.A.R.V.I.S. — System Access</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#05050f;--surface:rgba(10,10,25,0.9);--accent:#7c3aed;
+      --accent2:#a78bfa;--cyan:#06b6d4;--glow:rgba(124,58,237,0.5);
+      --text:#e2e0ff;--muted:#6b6490;--border:rgba(124,58,237,0.25);
+      --error:#ef4444;--success:#10b981;
+    }
+    html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Exo 2',sans-serif;overflow:hidden}
+    #bg{position:fixed;inset:0;z-index:0}
+    .grid{position:fixed;inset:0;z-index:0;pointer-events:none;
+      background-image:linear-gradient(rgba(124,58,237,.04) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(124,58,237,.04) 1px,transparent 1px);
+      background-size:50px 50px}
+    .page{position:relative;z-index:1;height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto}
+    .card{width:100%;max-width:440px;background:var(--surface);border:1px solid var(--border);
+      border-radius:22px;padding:36px 32px;backdrop-filter:blur(20px);
+      box-shadow:0 0 60px var(--glow),0 0 120px rgba(124,58,237,.08);
+      position:relative;overflow:hidden;animation:card-in .7s cubic-bezier(.16,1,.3,1) both}
+    .card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;
+      background:linear-gradient(90deg,transparent,var(--accent),var(--cyan),transparent)}
+    @keyframes card-in{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:none}}
+
+    .logo{text-align:center;margin-bottom:28px}
+    .logo-ring{width:68px;height:68px;border-radius:50%;margin:0 auto 14px;
+      background:linear-gradient(135deg,var(--accent),var(--cyan));
+      display:flex;align-items:center;justify-content:center;
+      font-family:'Orbitron',monospace;font-size:24px;font-weight:900;color:#fff;
+      box-shadow:0 0 40px var(--glow);animation:ring-pulse 3s ease-in-out infinite}
+    @keyframes ring-pulse{0%,100%{box-shadow:0 0 40px var(--glow)}50%{box-shadow:0 0 70px var(--glow)}}
+    .logo h1{font-family:'Orbitron',monospace;font-size:18px;letter-spacing:4px;font-weight:900}
+    .logo p{font-size:11px;color:var(--muted);letter-spacing:2px;margin-top:4px}
+
+    .tabs{display:flex;gap:0;margin-bottom:24px;border:1px solid var(--border);border-radius:10px;padding:4px}
+    .tab{flex:1;text-align:center;padding:9px;border-radius:7px;font-family:'Orbitron',monospace;
+      font-size:10px;letter-spacing:2px;cursor:pointer;color:var(--muted);transition:.2s;border:none;background:none}
+    .tab.active{background:var(--accent);color:#fff;box-shadow:0 0 20px var(--glow)}
+
+    .field{position:relative;margin-bottom:14px}
+    .field label{display:block;font-size:10px;letter-spacing:2px;color:var(--muted);
+      text-transform:uppercase;margin-bottom:6px;font-family:'Orbitron',monospace}
+    .field input{width:100%;background:rgba(0,0,0,.4);border:1px solid var(--border);
+      border-radius:10px;color:var(--text);font-family:'Exo 2',sans-serif;font-size:14px;
+      padding:13px 16px;outline:none;transition:.2s}
+    .field input:focus{border-color:var(--accent);box-shadow:0 0 20px var(--glow)}
+    .field input::placeholder{color:var(--muted)}
+
+    .btn{width:100%;padding:14px;border:none;border-radius:10px;
+      background:linear-gradient(135deg,var(--accent),var(--cyan));color:#fff;
+      font-family:'Orbitron',monospace;font-size:11px;letter-spacing:2px;
+      cursor:pointer;transition:.2s;box-shadow:0 4px 20px var(--glow);margin-top:6px;
+      position:relative;overflow:hidden}
+    .btn:hover{transform:translateY(-2px);box-shadow:0 8px 30px var(--glow)}
+    .btn:disabled{opacity:.6;cursor:not-allowed;transform:none}
+    .btn .spinner{display:none;width:18px;height:18px;border:2px solid rgba(255,255,255,.3);
+      border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto}
+    .btn.loading .btn-text{display:none}
+    .btn.loading .spinner{display:block}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* Divider */
+    .divider{display:flex;align-items:center;gap:12px;margin:18px 0;font-size:11px;color:var(--muted)}
+    .divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
+
+    /* Social login buttons */
+    .social-btns{display:flex;flex-direction:column;gap:10px}
+    .social-btn{display:flex;align-items:center;gap:12px;width:100%;padding:13px 16px;
+      background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:10px;
+      color:var(--text);font-family:'Exo 2',sans-serif;font-size:13px;
+      cursor:pointer;transition:.2s}
+    .social-btn:hover{border-color:var(--accent);background:rgba(124,58,237,.1)}
+    .social-btn .sicon{width:22px;height:22px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px}
+
+    /* Phone login */
+    .phone-row{display:flex;gap:8px}
+    .phone-row .code{width:80px;flex-shrink:0}
+    .phone-row .num{flex:1}
+
+    .msg{margin-top:14px;padding:10px 14px;border-radius:8px;font-size:12px;
+      text-align:center;display:none;animation:fadein .3s}
+    .msg.error{display:block;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:var(--error)}
+    .msg.success{display:block;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);color:var(--success)}
+    @keyframes fadein{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+
+    #registerForm,#phoneForm{display:none}
+    @media(max-width:480px){.card{padding:24px 18px}}
+  </style>
+</head>
+<body>
+<canvas id="bg"></canvas>
+<div class="grid"></div>
+<div class="page">
+  <div class="card">
+    <div class="logo">
+      <div class="logo-ring">J</div>
+      <h1>J.A.R.V.I.S.</h1>
+      <p>SECURE SYSTEM ACCESS</p>
+      <p style="font-size:10px;color:rgba(107,100,144,0.7);margin-top:6px;letter-spacing:0">New user? Click <b style="color:#a78bfa">REGISTER</b> to create an account</p>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" id="tabLogin"    onclick="switchTab('login')">LOGIN</button>
+      <button class="tab"        id="tabRegister" onclick="switchTab('register')">REGISTER</button>
+      <button class="tab"        id="tabPhone"    onclick="switchTab('phone')">PHONE</button>
+    </div>
+
+    <!-- Login -->
+    <div id="loginForm">
+      <div class="field"><label>Username</label><input type="text" id="loginUser" placeholder="Enter username" autocomplete="username"></div>
+      <div class="field">
+        <label>Password</label>
+        <div style="position:relative">
+          <input type="password" id="loginPass" placeholder="Enter password" autocomplete="off"
+            style="width:100%;background:rgba(0,0,0,.4);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'Exo 2',sans-serif;font-size:14px;padding:13px 44px 13px 16px;outline:none;transition:.2s">
+          <button type="button" onclick="togglePw('loginPass',this)"
+            style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:var(--muted);padding:4px">👁</button>
+        </div>
+      </div>
+      <button class="btn" id="loginBtn" onclick="doLogin()">
+        <span class="btn-text">INITIATE CONNECTION</span><div class="spinner"></div>
+      </button>
+      <div class="divider">or continue with</div>
+      <div class="social-btns">
+        <button class="social-btn" onclick="socialLogin('google')">
+          <span class="sicon">🔵</span>Continue with Google
+        </button>
+        <button class="social-btn" onclick="socialLogin('facebook')">
+          <span class="sicon">📘</span>Continue with Facebook
+        </button>
+      </div>
+    </div>
+
+    <!-- Register -->
+    <div id="registerForm">
+      <div class="field"><label>Username</label><input type="text" id="regUser" placeholder="Choose username" autocomplete="username"></div>
+      <div class="field">
+        <label>Password</label>
+        <div style="position:relative">
+          <input type="password" id="regPass" placeholder="Choose password" autocomplete="off"
+            style="width:100%;background:rgba(0,0,0,.4);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'Exo 2',sans-serif;font-size:14px;padding:13px 44px 13px 16px;outline:none;transition:.2s">
+          <button type="button" onclick="togglePw('regPass',this)"
+            style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:var(--muted);padding:4px">👁</button>
+        </div>
+      </div>
+      <div class="field"><label>Confirm Password</label><input type="password" id="regPass2" placeholder="Confirm password"></div>
+      <button class="btn" id="regBtn" onclick="doRegister()">
+        <span class="btn-text">CREATE CLEARANCE</span><div class="spinner"></div>
+      </button>
+      <div class="divider">or continue with</div>
+      <div class="social-btns">
+        <button class="social-btn" onclick="socialLogin('google')">
+          <span class="sicon">🔵</span>Continue with Google
+        </button>
+        <button class="social-btn" onclick="socialLogin('facebook')">
+          <span class="sicon">📘</span>Continue with Facebook
+        </button>
+      </div>
+    </div>
+
+    <!-- Phone -->
+    <div id="phoneForm">
+      <div class="field">
+        <label>Phone Number</label>
+        <div class="phone-row">
+          <input class="code" type="text" id="phoneCode" placeholder="+91" value="+91">
+          <input class="num" type="tel" id="phoneNum" placeholder="Enter number" autocomplete="tel">
+        </div>
+      </div>
+      <button class="btn" id="phoneBtn" onclick="doPhoneLogin()">
+        <span class="btn-text">SEND OTP</span><div class="spinner"></div>
+      </button>
+      <div id="otpSection" style="display:none;margin-top:14px">
+        <div class="field"><label>Enter OTP</label><input type="text" id="otpInput" placeholder="6-digit OTP" maxlength="6"></div>
+        <button class="btn" onclick="verifyOTP()"><span class="btn-text">VERIFY OTP</span><div class="spinner"></div></button>
+      </div>
+    </div>
+
+    <div id="msgBox" class="msg"></div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+<script>
+  // Particle background
+  (function(){
+    const c=document.getElementById('bg'),ctx=c.getContext('2d');
+    let W,H,pts=[];
+    function resize(){W=c.width=innerWidth;H=c.height=innerHeight;pts=[];
+      for(let i=0;i<80;i++)pts.push({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,r:Math.random()*1.5+.5})}
+    resize();window.addEventListener('resize',resize);
+    function draw(){ctx.clearRect(0,0,W,H);
+      pts.forEach(p=>{p.x+=p.vx;p.y+=p.vy;if(p.x<0||p.x>W)p.vx*=-1;if(p.y<0||p.y>H)p.vy*=-1;
+        ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle='rgba(124,58,237,0.6)';ctx.fill()});
+      pts.forEach((a,i)=>pts.slice(i+1).forEach(b=>{const d=Math.hypot(a.x-b.x,a.y-b.y);
+        if(d<120){ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);
+          ctx.strokeStyle=`rgba(124,58,237,${.15*(1-d/120)})`;ctx.stroke()}}));
+      requestAnimationFrame(draw)}
+    draw();
+  })();
+
+  if(localStorage.getItem('jarvis_user')) location.replace('chat.html');
+
+  function switchTab(t){
+    ['login','register','phone'].forEach(k=>{
+      document.getElementById(k+'Form').style.display = t===k?'block':'none';
+      document.getElementById('tab'+k.charAt(0).toUpperCase()+k.slice(1)).classList.toggle('active',t===k);
+    });
+    document.getElementById('msgBox').className='msg';
+    // Clear all password fields when switching tabs to prevent autofill confusion
+    ['loginPass','regPass','regPass2'].forEach(id=>{
+      const el=document.getElementById(id); if(el) el.value='';
+    });
+  }
+
+  function togglePw(fieldId, btn){
+    const inp = document.getElementById(fieldId);
+    if(inp.type==='password'){ inp.type='text'; btn.textContent='🙈'; }
+    else { inp.type='password'; btn.textContent='👁'; }
+  }
+
+  function showMsg(txt,type){const b=document.getElementById('msgBox');b.textContent=txt;b.className='msg '+type}
+  function setLoading(id,v){const b=document.getElementById(id);b.classList.toggle('loading',v);b.disabled=v}
+
+  async function doLogin(){
+    const u=document.getElementById('loginUser').value.trim();
+    const p=document.getElementById('loginPass').value.trim();
+    if(!u||!p){showMsg('Please fill in both fields.','error');return}
+    setLoading('loginBtn',true);
+    try{
+      console.log('[JARVIS] Login attempt:', u, 'API:', API_BASE);
+      const r=await fetch(`${API_BASE}/api/auth/login`,{method:'POST',
+        headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})});
+      const d=await r.json();
+      if(r.ok){
+        showMsg('Access granted. Welcome back, '+u+'!','success');
+        localStorage.setItem('jarvis_user',u);
+        setTimeout(()=>location.replace('chat.html'),800);
+      } else if(r.status===401){
+        console.log('[JARVIS] Login 401 response:', d);
+        showMsg('Incorrect username or password. New here? Click REGISTER above.','error');
+      } else {
+        showMsg(d.detail||'Login failed. Try again.','error');
+      }
+    }catch(e){
+      showMsg('Cannot reach server. Make sure the backend is running (start.bat / start.sh).','error');
+    }
+    setLoading('loginBtn',false);
+  }
+
+  async function doRegister(){
+    const u=document.getElementById('regUser').value.trim();
+    const p=document.getElementById('regPass').value.trim();
+    const p2=document.getElementById('regPass2').value.trim();
+    if(!u||!p){showMsg('Please fill in all fields.','error');return}
+    if(p!==p2){showMsg('Passwords do not match.','error');return}
+    if(p.length<4){showMsg('Password must be at least 4 characters.','error');return}
+    setLoading('regBtn',true);
+    try{
+      const r=await fetch(`${API_BASE}/api/auth/register`,{method:'POST',
+        headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})});
+      const d=await r.json();
+      if(r.ok){
+        showMsg('Account created! Logging you in…','success');
+        localStorage.setItem('jarvis_user',u);
+        setTimeout(()=>location.replace('chat.html'),1000);
+      } else if(r.status===409){
+        showMsg('Username already taken. Please choose another or login.','error');
+      } else {
+        showMsg(d.detail||'Registration failed. Try again.','error');
+      }
+    }catch(e){showMsg('Cannot reach server.','error')}
+    setLoading('regBtn',false);
+  }
+
+  function socialLogin(provider){
+    // Show info — full OAuth needs a backend provider setup (Firebase/Auth0)
+    showMsg(`To enable ${provider} login, connect Firebase Auth to the backend. See README for setup.`,'error');
+  }
+
+  let _otpSent=false;
+  function doPhoneLogin(){
+    const code=document.getElementById('phoneCode').value.trim();
+    const num=document.getElementById('phoneNum').value.trim();
+    if(!num||num.length<10){showMsg('Enter a valid phone number.','error');return}
+    // Demo OTP flow — in production connect to Firebase Phone Auth or Twilio
+    showMsg('OTP feature requires Firebase Phone Auth. See README.','error');
+    // Uncomment below when Firebase is connected:
+    // document.getElementById('otpSection').style.display='block';
+  }
+
+  function verifyOTP(){
+    const otp=document.getElementById('otpInput').value.trim();
+    if(otp.length!==6){showMsg('Enter the 6-digit OTP.','error');return}
+    showMsg('OTP verification requires Firebase. See README.','error');
+  }
+
+  document.getElementById('loginPass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin()});
+  document.getElementById('regPass2') .addEventListener('keydown',e=>{if(e.key==='Enter')doRegister()});
+</script>
+</body>
+</html>
